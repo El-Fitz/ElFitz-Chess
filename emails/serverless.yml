@@ -75,6 +75,8 @@ functions:
       - sns:
           topicName: elFitzChessParsedEmails
           displayName: New Parsed Emails Pipeline
+    environment:
+      identities: ["start":"arn:aws:sns:us-east-1:633607245587:elFitzChessCreateGame"]
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events

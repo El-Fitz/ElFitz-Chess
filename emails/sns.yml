@@ -1,0 +1,6 @@
+topicNames:
+  identities:
+    start: elFitzChessCreateGame
+arns:
+  identies:
+    start: arn:aws:sns:${self:provider.region}:${self:custom.private.IDs.aws}:${self:custom.sns.topicNames.identities.start}

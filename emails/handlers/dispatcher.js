@@ -9,7 +9,7 @@ module.exports.dispatcher = (event, context, callback) => {
   let identity = message.identity;
   let sender = message.sender;
   let subject = message.subject;
-  let identities = ["start":"arn:aws:sns:us-east-1:633607245587:elFitzChessCreateGame"];
+  let identities = process.env.identities;
 
   var snsArn = identities["identity"];
 
