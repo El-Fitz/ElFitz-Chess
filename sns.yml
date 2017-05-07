@@ -1,0 +1,14 @@
+topicNames:
+  identities:
+    start: elFitzChessCreateGame
+    gameid: elFitzChessExistingGame
+  emails:
+    valid: elFitzChessValidEmails
+    parsed: elFitzChessParsedEmails
+arns:
+  identities:
+    start: arn:aws:sns:${self:provider.region}:${self:custom.private.IDs.aws}:${self:custom.sns.topicNames.identities.start}
+    existing: arn:aws:sns:${self:provider.region}:${self:custom.private.IDs.aws}:${self:custom.sns.topicNames.identities.gameid
+  emails:
+    valid: arn:aws:sns:${self:provider.region}:${self:custom.private.IDs.aws}:${self:custom.sns.topicNames.emails.valid}
+    parsed: arn:aws:sns:${self:provider.region}:${self:custom.private.IDs.aws}:${self:custom.sns.topicNames.emails.parsed}

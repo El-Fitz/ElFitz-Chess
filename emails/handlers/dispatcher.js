@@ -1,4 +1,10 @@
 'use strict';
+var AWS = require('aws-sdk');
+let region = process.env.REGION
+AWS.config.region = region;
+var sns = new AWS.SNS();
+
+let identitiesARNs = JSON.parse(process.env.IDENTITIES_ARNS);
 
 module.exports.dispatcher = (event, context, callback) => {
 
@@ -10,11 +16,12 @@ module.exports.dispatcher = (event, context, callback) => {
   let sender = message.sender;
   let subject = message.subject;
   let identities = process.env.identities;
+  var snsArn = ""
 
-  var snsArn = identities["identity"];
-
-  if (typeof snsArn === 'undefined') {
-    snsArn = "arn:aws:sns:us-east-1:633607245587:elFitzChessExistingGame"
+  if (check(identitiesARNs[identity]) && check(identitiesARNs[identity]) && check(identitiesARNs[identity])) {
+    snsArn = identitiesARNs[identity];
+  } else {
+    snsArn = identitiesARNs["gameid"]
   }
 
   sns.publish({
@@ -42,3 +49,7 @@ module.exports.dispatcher = (event, context, callback) => {
   // Use this code if you don't use the http event with the LAMBDA-PROXY integration
   // callback(null, { message: 'Go Serverless v1.0! Your function executed successfully!', event });
 };
+
+function check(toCheck) {
+  return (typeof toCheck != 'undefined' && toCheck !== null);
+}

@@ -1,0 +1,153 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: ElFitzChess
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: arn:aws:dynamodb:${self:provider.region}:${self:custom.private.IDs.aws}:*
+
+custom:
+  usersTable: ElFitzChessUsers
+  gamesTable: ElFitzChessGames
+  private: ${file(private.yml)}
+  sns: ${file(sns.yml)}
+
+functions:
+  emailValidator:
+    handler: emails/handlers/validator.validator
+
+  emailParser:
+    handler: emails/handlers/parser.parser
+    events:
+      - sns:
+          topicName: ${self:custom.sns.topicNames.emails.valid}
+          displayName: New Valid Emails Pipeline
+
+  emailDispatcher:
+    handler: emails/handlers/dispatcher.dispatcher
+    events:
+      - sns:
+          topicName: ${self:custom.sns.topicNames.emails.parsed}
+          displayName: New Parsed Emails Pipeline
+    environment:
+      IDENTITIES_ARNS: '{"start": "${self:custom.sns.arns.identities.start}"}'
+      REGION: ${self:provider.region}
+
+  createGame:
+    handler: games/handlers/create.create
+    events:
+      - sns:
+          topicName: elFitzChessCreateGame
+          displayName: New Games To Be Created pipeline
+    environment:
+      GAMES_TABLE: ${self:custom.gamesTable}
+
+  createUser:
+    handler: users/handlers/createUser.createUser
+    events:
+      - sns:
+          topicName: elFitzChessCreateUser
+          displayName: New Users To Be Created pipeline
+    environment:
+      USERS_TABLE_NAME: ${self:custom.usersTable}
+
+  validateUser:
+    handler: users/handlers/validateUser.validateUser
+    events:
+      - http:
+          path: users/{id}/validate
+          method: get
+          cors: true
+    environment:
+      USERS_TABLE_NAME: ${self:custom.usersTable}
+
+  invalidateUser:
+    handler: users/handlers/invalidateUser.invalidateUser
+    events:
+      - http:
+          path: users/{id}/invalidate
+          method: get
+          cors: true
+    environment:
+      USERS_TABLE_NAME: ${self:custom.usersTable}
+
+  unsubscribeUser:
+    handler: users/handlers/unsubscribeUser.unsubscribeUser
+    events:
+      - http:
+          path: users/{id}/unsubscribe
+          method: get
+          cors: true
+    environment:
+      USERS_TABLE_NAME: ${self:custom.usersTable}
+
+  bouncedUser:
+    handler: users/handlers/bouncedUser.bouncedUser
+    events:
+      - sns:
+          topicName: elFitzChessBouncedEmail
+          displayName: New Bounced Emails Notification pipeline
+    environment:
+      USERS_TABLE_NAME: ${self:custom.usersTable}
+
+resources:
+  Resources:
+    GamesDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: gameID
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: gameID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.gamesTable}
+    UsersDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: userID
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: userID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:usersTable}

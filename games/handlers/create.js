@@ -3,14 +3,21 @@
 const AWS = require('aws-sdk');
 const uuid = require('uuid');
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const table = process.env.GAMES_TABLE
 
-module.exports.createGames = (event, context, callback) => {
+module.exports.create = (event, context, callback) => {
   const timestamp = new Date().getTime();
 
   let message = JSON.parse(event.Records[0].Sns.Message);
 
+  console.log("Message: ", message);
   let receiver = message.receiver;
   let identity = message.identity;
+  let players = [{
+    emailAddress: message.sender
+  }, {
+    emailAddress: message.subject
+  }]
   let player1 = {
     emailAddress: message.sender
   };
@@ -18,8 +25,13 @@ module.exports.createGames = (event, context, callback) => {
     emailAddress: message.subject
   };
 
+  console.log("Receiver: ", receiver);
+  console.log("Identity: ", identity);
+  console.log("Player 1: ", player1.emailAddress);
+  console.log("Player 2: ", player2.emailAddress);
+
   if (typeof receiver !== 'string' || typeof identity !== 'string'
-  || typeof sender !== 'string' || typeof subject !== 'string') {
+  || typeof players[0].emailAddress !== 'string' || typeof players[1].emailAddress !== 'string') {
     console.error('Validation Failed');
     callback(new Error("Coudln't create the chess game"));
     return
@@ -34,10 +46,10 @@ module.exports.createGames = (event, context, callback) => {
   let startingPlayer = Math.floor(Math.random() * 2);
 
   const params = {
-    TableName: 'ElFitzChessGames',
+    TableName: table,
     Item: {
-      id: uuid.v1(),
-      players: [player1, player2],
+      gameID: uuid.v1(),
+      players: players,
       startingPlayer: startingPlayer,
       started: false,
       finished: false,
@@ -50,7 +62,7 @@ module.exports.createGames = (event, context, callback) => {
   dynamoDB.put(params, function(error, result) {
     if (error) {
       console.error(error);
-      callback(new Error("Couldn't create the todo item"));
+      callback(new Error("Couldn't create the chess game item"));
       return;
     }
     const response = {
